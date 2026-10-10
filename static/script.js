@@ -5,16 +5,19 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
     const metaTableBody = document.getElementById('metaTableBody');
     const itemsTableBody = document.getElementById('itemsTableBody');
     
+    // Ensure at least one file is actively selected
     if (!fileInput.files || fileInput.files.length === 0) {
         return alert('Please upload a valid document first.');
     }
     
-    // Hide components and scrub grid records instantly on click
+    // Hide old components and wipe clean former records instantly on click
     pdfContent.style.display = 'none';
     metaTableBody.innerHTML = '';
     itemsTableBody.innerHTML = '';
     
     const formData = new FormData();
+    
+    // CRITICAL FIX: Append the single first file object index [0] to match the backend expectation
     formData.append('file', fileInput.files[0]);
     
     // Unveil moving loading spinner elements
@@ -39,7 +42,7 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
             // Map General Metadata Data Rows
             const fieldsToDisplay = [
                 { label: 'Document Type', value: docData.document_type },
-                { label: 'Language Detected', value: languageDisplay }, // <-- Uses the cleaned name
+                { label: 'Language Detected', value: languageDisplay },
                 { label: 'Document Title', value: docData.document_title },
                 { label: 'Date', value: docData.date },
                 { label: 'Document Number', value: docData.document_number },
