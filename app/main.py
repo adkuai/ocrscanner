@@ -4,10 +4,12 @@ from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from .collab_services import analyze_document
 
 app = FastAPI(
-    title="Hindi-English Document Intelligence",
+    title="ocrscanner",
     version="1.0.0"
 )
 
@@ -20,18 +22,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+# --- CRITICAL VERCEL PATH FIXES ---
+# Resolve absolute paths relative to this file's position
+CURRENT_DIR = Path(__file__).resolve().parent      # Points to 'app'
+PROJECT_ROOT = CURRENT_DIR.parent                  # Points to project root folder
+STATIC_DIR = PROJECT_ROOT / "static"
+
+# Vercel filesystem is read-only except for the system '/tmp' folder
+UPLOAD_DIR = Path("/tmp") / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# ----------------------------------
 
 # Define allowed extensions clearly
-# Change this specific line inside app/main.py
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".pdf"}
 
 
 @app.get("/")
 async def root():
-    from fastapi.responses import FileResponse
-    return FileResponse("static/index.html")
+    # Serve index.html using an absolute path reference
+    return FileResponse(STATIC_DIR / "index.html")
+
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
@@ -95,5 +105,6 @@ async def analyze(file: UploadFile = File(...)):
             except Exception:
                 pass
 
-from fastapi.staticfiles import StaticFiles
-app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Mount static assets at the very bottom using absolute mapping path
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
