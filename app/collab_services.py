@@ -11,6 +11,7 @@ from .schemas import DocumentData
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# UPDATED PROMPT: Forces Qwen2-VL to organize data to match your frontend table keys perfectly
 PROMPT = """
 You are an advanced document intelligence system. Analyze this document image carefully.
 This image may contain multiple pages stitched together vertically. Process all sections completely.
@@ -33,6 +34,14 @@ Return your complete final answer strictly as a raw JSON object string matching 
   "total_amount": float or null,
   "currency": string or null,
   "confidence": float or null,
+  "metadata": {
+    "Document Type": string or null,
+    "Document Title": string or null,
+    "Date": string or null,
+    "Document Number": string or null,
+    "Organization Name": string or null,
+    "Total Amount": string or null
+  },
   "items": [
     {
       "name": string or null,
@@ -114,8 +123,18 @@ async def analyze_document(file_path: str):
         else:
             parsed_dict = raw_output
 
+        # Inject dynamic structural fallback mapping parameters for your user frontend loops
+        if "metadata" not in parsed_dict or not parsed_dict["metadata"]:
+            parsed_dict["metadata"] = {
+                "Document Type": parsed_dict.get("document_type") or "N/A",
+                "Document Title": parsed_dict.get("document_title") or "N/A",
+                "Date": parsed_dict.get("date") or "N/A",
+                "Document Number": parsed_dict.get("document_number") or "N/A",
+                "Organization Name": parsed_dict.get("organization_name") or "N/A",
+                "Total Amount": str(parsed_dict.get("total_amount") or "N/A")
+            }
+
         if "items" not in parsed_dict or not parsed_dict["items"]:
             parsed_dict["items"] = []
 
-        return DocumentData(**parsed_dict)
-  
+        return parsed_dict
