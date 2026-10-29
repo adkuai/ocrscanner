@@ -137,4 +137,5 @@ async def analyze_document(file_path: str):
         if "items" not in parsed_dict or not parsed_dict["items"]:
             parsed_dict["items"] = []
 
-        return parsed_dict
+        return DocumentData(**parsed_dict)
+
